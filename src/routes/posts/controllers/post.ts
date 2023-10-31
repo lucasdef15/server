@@ -142,7 +142,7 @@ export const addPost = async (req: Request, res: Response) => {
         text: `Hello ${recipient.name},\n\nA new post has been published by ${
           user?.name
         }.\nTo read it, please follow this link: ${
-          'http://localhost:5173/posts/' + newPost.id
+          'https://r2619.us/posts/' + newPost.id
         }`,
       };
 
@@ -280,7 +280,7 @@ export const reportPost = async (req: Request, res: Response) => {
         ${message}
         \n
         You can review the reported post by following this link: ${
-          'http://localhost:5173/posts/' + post?.id
+          'https://r2619.us/posts/' + post?.id
         }
         \n
         Regards,
