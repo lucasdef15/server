@@ -5,6 +5,8 @@ import {
   logOut,
   currentUser,
   updateUser,
+  forgotPassword,
+  resetPassword,
 } from '../controllers/auth';
 import loginLimiter from '../../../middleware/loginLimiter';
 import verifyJWT from '../../../middleware/verifyJWT';
@@ -19,5 +21,7 @@ router.post('/login', loginLimiter, login);
 router.post('/logout', logOut);
 router.get('/currentUser', verifyJWT, currentUser);
 router.put('/update', upload.single('img'), verifyJWT, updateUser);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 export default router;

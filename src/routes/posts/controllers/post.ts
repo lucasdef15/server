@@ -29,6 +29,9 @@ export const getPosts = async (req: Request, res: Response) => {
       where: whereCondition,
       skip,
       take: pageSize,
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
     const totalPages = Math.ceil(totalPosts / pageSize);

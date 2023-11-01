@@ -4,16 +4,17 @@ import { prisma } from '../../../lib/db';
 import JWT from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import sharp from 'sharp';
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 dotenv.config();
 
+// Generate and store the verification code for the user
+const verificationCodes = new Map();
+
 export const signup = async (req: Request, res: Response) => {
   try {
-    // const { name, email, password } = req.body;
-
-    const name = 'Lucas';
-    const email = 'lucas@hotmail.com';
-    const password = 'lukao1000';
+    const { name, email, password } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -181,6 +182,99 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.json('User has been updated.');
   } catch (error) {
     console.error('Error to get current user:', error);
+    return res.status(500).json({
+      errors: [{ msg: 'Internal server error.' }],
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const email = req.body.email;
+    const code = crypto.randomBytes(3).toString('hex');
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      return res.send('User not found.');
+    }
+
+    // Store the code with the user's email
+    verificationCodes.set(email, { code, createdAt: Date.now() });
+
+    const transporter = nodemailer.createTransport({
+      host: 'mail.r2619.us', // Incoming and outgoing server
+      port: 465, // SMTP Port
+      secure: true, // Use SSL/TLS
+      auth: {
+        user: 'server@r2619.us', // Your email address
+        pass: 'Vancouver123@',
+      },
+    });
+
+    const mailOptions = {
+      from: 'server@r2619.us',
+      to: email,
+      subject: 'R2619 Password Reset Code',
+      text: `Your verification code is: ${code}`,
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(error);
+          reject(error);
+        } else {
+          res.send('Code sent to your email');
+          resolve();
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error to reset password:', error);
+    return res.status(500).json({
+      errors: [{ msg: 'Internal server error.' }],
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const email = req.body.email;
+    const code = req.body.code;
+    const newPassword = req.body.newPassword;
+
+    const storedCode = verificationCodes.get(email);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    if (
+      !storedCode ||
+      storedCode.code !== code ||
+      Date.now() - storedCode.createdAt > 15 * 60 * 1000
+    ) {
+      res.status(400).send('Invalid or expired code');
+    } else {
+      await prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          password: hashedPassword,
+        },
+      });
+      // Update verification code status
+      verificationCodes.delete(email);
+
+      res.send('Password reset successfully');
+    }
+  } catch (error) {
+    console.error('Error to reset password:', error);
     return res.status(500).json({
       errors: [{ msg: 'Internal server error.' }],
     });
