@@ -15,4 +15,6 @@ router.post('/login', loginLimiter_1.default, auth_1.login);
 router.post('/logout', auth_1.logOut);
 router.get('/currentUser', verifyJWT_1.default, auth_1.currentUser);
 router.put('/update', upload.single('img'), verifyJWT_1.default, auth_1.updateUser);
+router.post('/forgot-password', auth_1.forgotPassword);
+router.post('/reset-password', auth_1.resetPassword);
 exports.default = router;

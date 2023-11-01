@@ -12,19 +12,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUser = exports.currentUser = exports.logOut = exports.login = exports.signup = void 0;
+exports.resetPassword = exports.forgotPassword = exports.updateUser = exports.currentUser = exports.logOut = exports.login = exports.signup = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const db_1 = require("../../../lib/db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const sharp_1 = __importDefault(require("sharp"));
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const crypto_1 = __importDefault(require("crypto"));
 dotenv_1.default.config();
+// Generate and store the verification code for the user
+const verificationCodes = new Map();
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // const { name, email, password } = req.body;
-        const name = 'Lucas';
-        const email = 'lucas@hotmail.com';
-        const password = 'lukao1000';
+        const { name, email, password } = req.body;
         const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
         const existingUser = yield db_1.prisma.user.findUnique({
             where: {
@@ -191,3 +192,93 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.updateUser = updateUser;
+const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const email = req.body.email;
+        const code = crypto_1.default.randomBytes(3).toString('hex');
+        const user = yield db_1.prisma.user.findUnique({
+            where: {
+                email,
+            },
+        });
+        if (!user) {
+            return res.send('User not found.');
+        }
+        // Store the code with the user's email
+        verificationCodes.set(email, { code, createdAt: Date.now() });
+        const transporter = nodemailer_1.default.createTransport({
+            host: 'mail.r2619.us',
+            port: 465,
+            secure: true,
+            auth: {
+                user: 'server@r2619.us',
+                pass: 'Vancouver123@',
+            },
+        });
+        const mailOptions = {
+            from: 'server@r2619.us',
+            to: email,
+            subject: 'R2619 Password Reset Code',
+            text: `Your verification code is: ${code}`,
+        };
+        yield new Promise((resolve, reject) => {
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error(error);
+                    reject(error);
+                }
+                else {
+                    res.send('Code sent to your email');
+                    resolve();
+                }
+            });
+        });
+    }
+    catch (error) {
+        console.error('Error to reset password:', error);
+        return res.status(500).json({
+            errors: [{ msg: 'Internal server error.' }],
+        });
+    }
+    finally {
+        yield db_1.prisma.$disconnect();
+    }
+});
+exports.forgotPassword = forgotPassword;
+const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const email = req.body.email;
+        const code = req.body.code;
+        const newPassword = req.body.newPassword;
+        const storedCode = verificationCodes.get(email);
+        const hashedPassword = yield bcryptjs_1.default.hash(newPassword, 10);
+        if (!storedCode ||
+            storedCode.code !== code ||
+            Date.now() - storedCode.createdAt > 15 * 60 * 1000) {
+            res.status(400).send('Invalid or expired code');
+        }
+        else {
+            yield db_1.prisma.user.update({
+                where: {
+                    email,
+                },
+                data: {
+                    password: hashedPassword,
+                },
+            });
+            // Update verification code status
+            verificationCodes.delete(email);
+            res.send('Password reset successfully');
+        }
+    }
+    catch (error) {
+        console.error('Error to reset password:', error);
+        return res.status(500).json({
+            errors: [{ msg: 'Internal server error.' }],
+        });
+    }
+    finally {
+        yield db_1.prisma.$disconnect();
+    }
+});
+exports.resetPassword = resetPassword;

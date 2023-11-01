@@ -32,6 +32,9 @@ const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             where: whereCondition,
             skip,
             take: pageSize,
+            orderBy: {
+                createdAt: 'desc',
+            },
         });
         const totalPages = Math.ceil(totalPosts / pageSize);
         return res.status(200).json({ posts, totalPosts, totalPages });
