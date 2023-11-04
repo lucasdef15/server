@@ -15,6 +15,9 @@ const verificationCodes = new Map();
 export const signup = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
+    // const name = 'Lucas';
+    // const email = 'lucas@hotmail.com';
+    // const password = 'lukao1000';
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -37,8 +40,8 @@ export const signup = async (req: Request, res: Response) => {
 
     const newUser = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: name,
+        email: email,
         base64Img: '',
         password: hashedPassword,
         role: 'ADMIN',
@@ -159,7 +162,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
       // Resize and optimize the image
       const resizedBuffer = await sharp(buffer)
-        .resize({ width: 950, height: 600 })
+        .resize({ width: 500, height: 500 })
         .toFormat('jpeg')
         .toBuffer();
 
