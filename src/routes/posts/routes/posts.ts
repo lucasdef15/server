@@ -12,7 +12,13 @@ import multer from 'multer';
 
 const router = express.Router();
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 1073741824,
+    fieldSize: 1073741824,
+  },
+});
 
 router.get('/', verifyJWT, getPosts);
 router.get('/:id', verifyJWT, getPost);

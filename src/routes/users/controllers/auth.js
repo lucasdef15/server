@@ -26,6 +26,9 @@ const verificationCodes = new Map();
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name, email, password } = req.body;
+        // const name = 'Lucas';
+        // const email = 'lucas@hotmail.com';
+        // const password = 'lukao1000';
         const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
         const existingUser = yield db_1.prisma.user.findUnique({
             where: {
@@ -44,8 +47,8 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         const newUser = yield db_1.prisma.user.create({
             data: {
-                name,
-                email,
+                name: name,
+                email: email,
                 base64Img: '',
                 password: hashedPassword,
                 role: 'ADMIN',
@@ -162,7 +165,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             const buffer = req.file.buffer;
             // Resize and optimize the image
             const resizedBuffer = yield (0, sharp_1.default)(buffer)
-                .resize({ width: 950, height: 600 })
+                .resize({ width: 500, height: 500 })
                 .toFormat('jpeg')
                 .toBuffer();
             image = resizedBuffer.toString('base64');

@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 // Logger middleware to log requests
 app.use(logger);
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '5000mb' }));
 app.use(cookieParser());
 
 // Serve static files from the 'public' directory

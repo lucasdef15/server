@@ -8,7 +8,13 @@ const post_1 = require("../controllers/post");
 const verifyJWT_1 = __importDefault(require("../../../middleware/verifyJWT"));
 const multer_1 = __importDefault(require("multer"));
 const router = express_1.default.Router();
-const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
+const upload = (0, multer_1.default)({
+    storage: multer_1.default.memoryStorage(),
+    limits: {
+        fileSize: 1073741824,
+        fieldSize: 1073741824,
+    },
+});
 router.get('/', verifyJWT_1.default, post_1.getPosts);
 router.get('/:id', verifyJWT_1.default, post_1.getPost);
 router.post('/', upload.single('img'), verifyJWT_1.default, post_1.addPost);
